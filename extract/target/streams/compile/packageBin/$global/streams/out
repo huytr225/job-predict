@@ -1,0 +1,9 @@
+[0m[[0minfo[0m] [0mPackaging /mnt/volume/ggcluster/spark-2.1.1-bin-hadoop2.7/huy/extract/target/scala-2.11/simple-project_2.11-1.0.jar ...[0m
+[0m[[0mdebug[0m] [0mInput file mappings:[0m
+[0m[[0mdebug[0m] [0m	extract$IdleTime.class[0m
+[0m[[0mdebug[0m] [0m	  /mnt/volume/ggcluster/spark-2.1.1-bin-hadoop2.7/huy/extract/target/scala-2.11/classes/extract$IdleTime.class[0m
+[0m[[0mdebug[0m] [0m	extract$.class[0m
+[0m[[0mdebug[0m] [0m	  /mnt/volume/ggcluster/spark-2.1.1-bin-hadoop2.7/huy/extract/target/scala-2.11/classes/extract$.class[0m
+[0m[[0mdebug[0m] [0m	extract.class[0m
+[0m[[0mdebug[0m] [0m	  /mnt/volume/ggcluster/spark-2.1.1-bin-hadoop2.7/huy/extract/target/scala-2.11/classes/extract.class[0m
+[0m[[0minfo[0m] [0mDone packaging.[0m

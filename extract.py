@@ -1,28 +1,35 @@
+from __future__ import print_function
 
-from pyspark.sql.session import SparkSession as spark
-import pandas as pd
-from pyspark import SparkContext
-from pyspark.sql import SQLContext
+import sys
+
+from pyspark.sql import SparkSession
 from pyspark.sql.types import *
-from matplotlib import pyplot
 import os
-sc = SparkContext(appName="Task_usage")
-sql_context = SQLContext(sc)
 
-# folder_path ='/mnt/volume/ggcluster/clusterdata-2011-2/task_usage/'
-folder_path = '/mnt/volume/ggcluster/clusterdata-2011-2/task_usage/'
+if __name__ == "__main__":
+    spark = SparkSession\
+        .builder\
+        .appName("extract")\
+        .getOrCreate()
 
-dataSchema = StructType([StructField('startTime', StringType(), True),
-                         StructField('endTime', StringType(), True),
-                         StructField('JobId', LongType(), True),
+    folder_path = '/mnt/volume/ggcluster/clusterdata-2011-2/task_usage/'
+    jobschema = StructType([StructField('timestamp', LongType(), True),
+                         StructField('missingInfo', IntegerType(), True),
+                         StructField('jobID', LongType(), True),
+                         StructField('eventType', IntegerType(), True),
+                         StructField('username', StringType(), True),
+                         StructField('schedulingClass', IntegerType(), True),
+                         StructField('jobName', StringType(), True),
+                         StructField('logicalJobName', StringType(), True)])
+
+    taskSchema = StructType([StructField('startTime', LongType(), True),
+                         StructField('endTime', LongType(), True),
+                         StructField('jobID', LongType(), True),
                          StructField('taskIndex', LongType(), True),
-                         StructField('machineId', LongType(), True),
+                         StructField('machineID', LongType(), True),
                          StructField('meanCPUUsage', FloatType(), True),
-                         # canonical memory usage
                          StructField('CMU', FloatType(), True),
-                         # assigned memory usage
-                         StructField('AssignMem', FloatType(), True),
-                         # unmapped page cache memory usage
+                         StructField('assignMem', FloatType(), True),
                          StructField('unmapped_cache_usage', FloatType(), True),
                          StructField('page_cache_usage', FloatType(), True),
                          StructField('max_mem_usage', FloatType(), True),
@@ -36,15 +43,37 @@ dataSchema = StructType([StructField('startTime', StringType(), True),
                          StructField('agg_type', FloatType(), True),
                          StructField('sampled_cpu_usage', FloatType(), True)])
 
-jobEventsDF = (
-    sql_context.read
-    .format('com.databricks.spark.csv')
-    .schema(dataSchema)
-    .load("../../clusterdata-2011-2/task_usage/part-00000-of-00500.csv")
-)
-jobEventsDF.createOrReplaceTempView("dataFrame")
-df = sql_context.sql("select count(distinct JobID) from dataFrame")
-schema_df = ["time", "numberOfJob"]
-df.toPandas().to_csv('results/extract.csv', index=False, header=None)
-sc.stop()
+#    jobEvents = spark\
+#        .read\
+#        .csv("../../clusterdata-2011-2/job_events/out.csv", schema = jobschema)
+
+    #taskUsage = spark\
+    #    .read\
+    #    .csv("../../clusterdata-2011-2/task_usage/part-00000-of-00500.csv", schema = taskSchema)
+   
+#    jobEvents.createOrReplaceTempView("job_events")
+
+    for file_name in os.listdir(folder_path):
+      taskUsage = spark\
+        .read\
+        .csv("%s%s"%(folder_path,file_name), schema = taskSchema)  
+      taskUsage.createOrReplaceTempView("task_usage")
+      extract = spark.sql("""
+        select * 
+        from task_usage
+	where jobID = 6336594489
+      """)
+      extract.toPandas().to_csv('results/topjobid/%s'%(file_name), index=False, header=None)
+
+    #extract1 = spark.sql("""
+#	select t.*
+#	from (
+#          select jobID, dense_rank() over (partition by jobID order by startTime), startTime, endTime, taskIndex 
+#          from  task_usage
+#	) as t, job_events j
+#	where t.jobID = j.jobID and eventType = 0
+#    """)
+    #select  min(startTime), max(endTime), JobID from dataFrameTaskUsage as TU group by JobID
+#    extract.toPandas().to_csv('results/extract.csv', index=False, header=None)
+    spark.stop()
 

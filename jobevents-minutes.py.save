@@ -1,0 +1,36 @@
+from __future__ import print_function
+
+import sys
+
+from pyspark.sql import SparkSession
+from pyspark.sql.types import *
+
+if __name__ == "__main__":
+    spark = SparkSession\
+        .builder\
+        .appName("jobevents")\
+        .getOrCreate()
+
+    jobschema = StructType([StructField('timestamp', LongType(), True),
+                         StructField('missinginfo', IntegerType(), True),
+                         StructField('jobID', LongType(), True),
+                         StructField('eventtype', IntegerType(), True),
+                         StructField('username', StringType(), True),
+                         StructField('schedulingclass', IntegerType(), True),
+                         StructField('jobname', StringType(), True),
+                         StructField('logicaljobname', StringType(), True)])
+
+    jobEvents = spark\
+        .read\
+        .csv("examples/src/main/python/job_events/out.csv", schema = jobschema)
+    jobEvents.createOrReplaceTempView("job
+    sqlWay = spark.sql("""
+    select round((timestamp/1000000)/3600) as timestamp, count(jobID) as numberOfJob
+    from job_events
+    where eventtype = 0
+    group by round((timestamp/1000000)/3600)
+    order by timestamp
+    """)
+    sqlWay.explain()
+    sqlWay.toPandas().to_csv('jobevents-days-submit.csv', index=False, header=None)
+    spark.stop()
